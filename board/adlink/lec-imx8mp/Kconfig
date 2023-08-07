@@ -1,0 +1,20 @@
+if TARGET_LEC_IMX8MP
+
+config SYS_BOARD
+	default "lec-imx8mp"
+
+config SYS_VENDOR
+	default "adlink"
+
+config SYS_CONFIG_NAME
+	default "lec-imx8mp"
+
+config IMX_CONFIG
+	default "board/adlink/lec-imx8mp/imximage-8mp-lpddr4.cfg"
+
+config SYS_IMX8MP_SKU_ADDR
+	hex
+
+source "board/adlink/common/Kconfig"
+
+endif
