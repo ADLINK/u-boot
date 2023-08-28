@@ -29,6 +29,7 @@ int __weak show_board_info(void)
 		char str[80];
 		int ret = -ENOSYS;
 
+#if 0
 		if (IS_ENABLED(CONFIG_SYSINFO)) {
 			/* This might provide more detail */
 			ret = sysinfo_get(&dev);
@@ -47,6 +48,24 @@ int __weak show_board_info(void)
 			model = fdt_getprop(gd->fdt_blob, 0, "model", NULL);
 		else
 			model = str;
+#else
+	switch (get_dram_sku()){
+		case 3:	//4GB
+			model = "ADLINK lec-imx8mm LPDDR4 4GB SOM";
+			break;
+		case 2:	//2GB
+			model = "ADLINK lec-imx8mm LPDDR4 2GB SOM";
+			break;
+		case 1:	//1GB
+			model = "ADLINK lec-imx8mm LPDDR4 1GB SOM";
+			break;
+		case 0: //512MB
+			model = "ADLINK lec-imx8mm LPDDR4 512MB SOM";
+			break;
+		default:
+			model = "Can not got dram sku";
+	}
+#endif
 
 		if (model)
 			printf("Model: %s\n", model);

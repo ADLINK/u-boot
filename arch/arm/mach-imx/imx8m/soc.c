@@ -43,6 +43,22 @@ struct imx_sec_config_fuse_t const imx_sec_config_fuse = {
 };
 #endif
 
+#define GPIO3_DR_ADDR	0x30220000
+#define SKU_CFG1	6
+#define SKU_CFG2	9
+
+int get_dram_sku(void)
+{
+	int dram_sku,dram_sku_cfg1,dram_sku_cfg2;
+	unsigned int dram_sku_data;
+
+	dram_sku_data = readl(GPIO3_DR_ADDR);
+	dram_sku_cfg1 = ((dram_sku_data >> SKU_CFG1) & (0x1));
+	dram_sku_cfg2 = ((dram_sku_data >> SKU_CFG2) & (0x1));
+	dram_sku=((dram_sku_cfg1 <<1)|(dram_sku_cfg2));
+	return dram_sku;
+}
+
 int timer_init(void)
 {
 #ifdef CONFIG_SPL_BUILD
@@ -188,9 +204,28 @@ static unsigned int imx8m_find_dram_entry_in_mem_map(void)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(imx8m_mem_map); i++)
-		if (imx8m_mem_map[i].phys == CONFIG_SYS_SDRAM_BASE)
-			return i;
+	for (i = 0; i < ARRAY_SIZE(imx8m_mem_map); i++){
+		if (imx8m_mem_map[i].phys == CONFIG_SYS_SDRAM_BASE) {
+			/* resetup dram size by sku */
+			switch (get_dram_sku()){
+				case 3:  //4GB
+					imx8m_mem_map[i].size = 0xC0000000;
+					imx8m_mem_map[i+1].size = 0x40000000;
+					break;
+				case 2:	//2GB
+					imx8m_mem_map[i].size = 0x80000000;
+					break;
+				case 1:	//1GB
+					imx8m_mem_map[i].size = 0x40000000;
+					break;
+				case 0:	//512M
+					imx8m_mem_map[i].size = 0x20000000;
+					break;
+			}
+ 			return i;
+		}
+	}
+ 
 
 	hang();	/* Entry not found, this must never happen. */
 }
@@ -230,11 +265,27 @@ __weak int board_phys_sdram_size(phys_size_t *size)
 {
 	if (!size)
 		return -EINVAL;
-
+#if 0
 	*size = PHYS_SDRAM_SIZE;
 
 #ifdef PHYS_SDRAM_2_SIZE
 	*size += PHYS_SDRAM_2_SIZE;
+#endif
+#else
+	switch (get_dram_sku()) {
+		case 3: //4GB
+			*size = 0x100000000;
+			break;
+		case 2:	//2GB
+			*size = 0x80000000;
+			break;
+		case 1: //1GB
+			*size = 0x40000000;
+			break;
+		case 0:	//512MB
+			*size = 0x20000000;
+			break;
+	}
 #endif
 	return 0;
 }
