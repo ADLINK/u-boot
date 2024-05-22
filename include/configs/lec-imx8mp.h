@@ -39,8 +39,6 @@
 
 #endif
 
-#define CONFIG_SYS_IMX8MP_SKU_ADDR	0x96DFFC
-
 #define CONFIG_CMD_READ
 #define CONFIG_SERIAL_TAG
 #define CONFIG_FASTBOOT_USB_DEV 0
@@ -198,15 +196,31 @@
 
 #define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 
-/* Totally 6GB DDR */
+/* Totally 2/4/8 (default 6GB) DDR */
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 #define PHYS_SDRAM			0x40000000
+#if defined(CONFIG_LPDDR4_2GB) || defined(CONFIG_LPDDR4_2GK)
+#define PHYS_SDRAM_SIZE			0x80000000	/* 2 GB */
+#elif defined(CONFIG_LPDDR4_4GB)
 #define PHYS_SDRAM_SIZE			0xC0000000	/* 3 GB */
+#elif defined(CONFIG_LPDDR4_8GB)
+#define PHYS_SDRAM_SIZE			0xC0000000	/* 3 GB */
+#else
+#define PHYS_SDRAM_SIZE			0xC0000000	/* 3 GB */
+#endif
 #define PHYS_SDRAM_2			0x100000000
 #ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK
 #define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
 #else
+#if defined(CONFIG_LPDDR4_2GB) || defined(CONFIG_LPDDR4_2GK)
+#define PHYS_SDRAM_2_SIZE		0x00000000	/* 0 GB */
+#elif defined(CONFIG_LPDDR4_4GB)
+#define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
+#elif defined(CONFIG_LPDDR4_8GB)
+#define PHYS_SDRAM_2_SIZE		0x140000000	/* 5 GB */
+#else
 #define PHYS_SDRAM_2_SIZE		0xC0000000	/* 3 GB */
+#endif
 #endif
 
 #define CONFIG_MXC_UART_BASE		UART3_BASE_ADDR

@@ -531,6 +531,47 @@ static void setup_codec(void)
 		env_set("fdtfile", "lec-imx8mp-hydis-hv150ux2.dtb");
 }
 
+static void fixup_boot_targets(void)
+{
+	uint32_t dev = 1;
+	uint32_t len;
+	char buf[64];
+	char sub[8];
+	char* boot_targets;
+	char* p;
+	char* q;
+	char* r;
+
+	p = boot_targets = env_get("boot_targets");
+	r = buf;
+
+	memset(buf, '\0', sizeof(buf));
+
+	if(mmc_get_env_dev() == 1)
+		dev = 2;
+
+	sprintf(sub, "mmc%d", dev);
+	len = strlen(sub);
+
+	while((q = strstr(p, sub)) != NULL)
+	{
+		uint32_t inc = q - p;
+		memcpy(r, p, inc);
+		p = q + len;
+		r += inc;
+
+		if(strstr(r - 1, " ") != NULL)
+			r -= 1;
+	}
+
+	q = boot_targets + strlen(boot_targets);
+
+	if(p != q)
+		memcpy(r, p, q - p);
+
+	env_set("boot_targets", buf);
+}
+
 int board_late_init(void)
 {
 #ifdef CONFIG_ENV_IS_IN_MMC
@@ -541,6 +582,7 @@ int board_late_init(void)
 	env_set("board_rev", "iMX8MP");
 #endif
 	setup_codec();
+	fixup_boot_targets();
 
 	return 0;
 }

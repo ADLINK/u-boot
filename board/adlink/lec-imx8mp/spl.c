@@ -56,44 +56,9 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 #endif
 }
 
-uint32_t get_dram_sku(void);
-extern struct dram_timing_info dram_timing_8GB,
-			dram_timing_4GB,
-			dram_timing_2GK,
-			dram_timing_2GB;
-
 void spl_dram_init(void)
 {
-	struct dram_timing_info *dram_timing[] = {
-		NULL,
-		NULL,
-		&dram_timing_2GB,
-		&dram_timing_4GB,
-		&dram_timing_8GB
-	};
-
-	ddr_init(dram_timing[get_dram_sku()]);
-}
-
-void board_dram_ecc_scrub_2GB(void);
-void board_dram_ecc_scrub_4GB(void);
-
-void board_dram_ecc_scrub(void)
-{
-#ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
-	void (*ecc_board_type[]) (void) = {
-		NULL,
-		NULL,
-		&board_dram_ecc_scrub_2GB,
-		&board_dram_ecc_scrub_4GB,
-		NULL
-	};
-
-	void (*dram_ecc_scrub) (void)  = ecc_board_type[get_dram_sku()];
-
-	if(dram_ecc_scrub)
-		dram_ecc_scrub();
-#endif
+	ddr_init(&dram_timing);
 }
 
 void spl_board_init(void)

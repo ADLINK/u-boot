@@ -12,8 +12,27 @@ config SYS_CONFIG_NAME
 config IMX_CONFIG
 	default "board/adlink/lec-imx8mp/imximage-8mp-lpddr4.cfg"
 
-config SYS_IMX8MP_SKU_ADDR
-	hex
+config IMX_DDRSIZE
+	bool "Define lec-imx8mp DDR Size"
+	depends on TARGET_LEC_IMX8MP
+
+choice
+	prompt "Select a lec-imx8mp DDR Size"
+	depends on IMX_DDRSIZE
+
+	config LPDDR4_2GB
+		bool "LPDDR4_2GB"
+
+        config LPDDR4_2GK
+		bool "LPDDR4_2GK"
+
+	config LPDDR4_4GB
+		bool "LPDDR4_4GB"
+
+	config LPDDR4_8GB
+		bool "LPDDR4_8GB"
+
+endchoice
 
 source "board/adlink/common/Kconfig"
 

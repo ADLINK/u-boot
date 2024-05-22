@@ -33,7 +33,6 @@
 #include <linux/bitops.h>
 #include <asm/setup.h>
 #include <asm/bootm.h>
-#include <i2c.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -183,98 +182,15 @@ static struct mm_region imx8m_mem_map[] = {
 	}
 };
 
-#if defined(CONFIG_SPL_BUILD)
-static uint32_t get_bomid(void)
-{
-	int ret;
-	uint8_t data;
-	struct udevice *bus;
-	struct udevice *i2c_dev = NULL;
-	volatile uint32_t *bomid = (void *)CONFIG_SYS_IMX8MP_SKU_ADDR;
-
-	ret = uclass_get_device_by_seq(UCLASS_I2C, 3, &bus);
-	if (ret) {
-		printf("%s: Can't find bus\n", __func__);
-		return -EINVAL;
-	}
-
-	ret = dm_i2c_probe(bus, 0x70, 0, &i2c_dev);
-	if (ret) {
-		printf("%s: Can't find device id=0x%x\n",
-			__func__, 0x70);
-		return -ENODEV;
-	}
-
-	ret = dm_i2c_read(i2c_dev, 0x10, &data, 1);
-	if (ret) {
-		printf("%s dm_i2c_read failed, err %d\n", __func__, ret);
-		return -EIO;
-	}
-
-	*bomid = ((data & 0x03) << 3) | ((data & 0x1C) >> 2);
-	return *bomid;
-}
-#else
-static uint32_t get_bomid(void)
-{
-	volatile uint32_t *bomid = (void *)CONFIG_SYS_IMX8MP_SKU_ADDR;
-	return *bomid;
-}
-#endif
-
-uint8_t get_dram_sku(void)
-{
-	uint8_t size = 0;
-	uint32_t bomid = get_bomid();
-
-	//printf("bomid: %d\n", bomid);
-
-	if(bomid < 24) {
-		if(bomid < 12) {
-			size = 2;
-		}
-		else {
-			size = 3;
-		}
-	}
-	else {
-		size = 4;
-	}
-
-	return size;
-}
-
 struct mm_region *mem_map = imx8m_mem_map;
 
 static unsigned int imx8m_find_dram_entry_in_mem_map(void)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(imx8m_mem_map); i++) {
-		if (imx8m_mem_map[i].phys == CONFIG_SYS_SDRAM_BASE) {
-			/* resetup dram size by sku */
-			switch (get_dram_sku()) {
-				case 4:  //8GB
-					imx8m_mem_map[i].size = 0xC0000000;
-					imx8m_mem_map[i+1].size = 0x140000000;
-					break;
-				case 3:  //4GB
-					imx8m_mem_map[i].size = 0xC0000000;
-					imx8m_mem_map[i+1].size = 0x40000000;
-					break;
-				case 2:	//2GB
-					imx8m_mem_map[i].size = 0x80000000;
-					break;
-				case 1:	//1GB
-					imx8m_mem_map[i].size = 0x40000000;
-					break;
-				case 0:	//512M
-					imx8m_mem_map[i].size = 0x20000000;
-					break;
-			}
+	for (i = 0; i < ARRAY_SIZE(imx8m_mem_map); i++)
+		if (imx8m_mem_map[i].phys == CONFIG_SYS_SDRAM_BASE)
 			return i;
-		}
-	}
 
 	hang();	/* Entry not found, this must never happen. */
 }
@@ -315,51 +231,21 @@ __weak int board_phys_sdram_size(phys_size_t *size)
 	if (!size)
 		return -EINVAL;
 
-#if 0
+#ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
+	//ECC DRAM consumes 1/8th of DDR size
+#if defined(CONFIG_LPDDR4_8GB)
+	*size = 0x1C0000000;
+#elif defined(CONFIG_LPDDR4_4GB)
+	*size = 0xE0000000;
+#elif defined(CONFIG_LPDDR4_2GB) || defined(CONFIG_LPDDR4_2GK)
+	*size = 0x70000000;
+#endif
+#else
 	*size = PHYS_SDRAM_SIZE;
 
 #ifdef PHYS_SDRAM_2_SIZE
 	*size += PHYS_SDRAM_2_SIZE;
 #endif
-#endif
-
-#ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
-	//ECC DRAM consumes 1/8th of DDR size
-	switch (get_dram_sku()) {
-                case 4: //8GB
-                        *size = 0x1C0000000;
-                        break;
-                case 3: //4GB
-                        *size = 0xE0000000;
-                        break;
-                case 2: //2GB
-                        *size = 0x70000000;
-                        break;
-                case 1: //1GB
-                        *size = 0x38000000;
-                        break;
-                case 0: //512MB
-                        *size = 0x1C000000;
-                        break;
-        }
-#else
-	switch (get_dram_sku()) {
-                case 4: //8GB
-                        *size = 0x200000000;
-                        break;
-                case 3: //4GB
-                        *size = 0x100000000;
-                        break;
-                case 2: //2GB
-                        *size = 0x80000000;
-                        break;
-                case 1: //1GB
-                        *size = 0x40000000;
-                        break;
-                case 0: //512MB
-                        *size = 0x20000000;
-                        break;
-        }
 #endif
 
 	return 0;
