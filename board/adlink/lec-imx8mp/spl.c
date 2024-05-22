@@ -75,6 +75,27 @@ void spl_dram_init(void)
 	ddr_init(dram_timing[get_dram_sku()]);
 }
 
+void board_dram_ecc_scrub_2GB(void);
+void board_dram_ecc_scrub_4GB(void);
+
+void board_dram_ecc_scrub(void)
+{
+#ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
+	void (*ecc_board_type[]) (void) = {
+		NULL,
+		NULL,
+		&board_dram_ecc_scrub_2GB,
+		&board_dram_ecc_scrub_4GB,
+		NULL
+	};
+
+	void (*dram_ecc_scrub) (void)  = ecc_board_type[get_dram_sku()];
+
+	if(dram_ecc_scrub)
+		dram_ecc_scrub();
+#endif
+}
+
 void spl_board_init(void)
 {
 	if (IS_ENABLED(CONFIG_FSL_CAAM)) {

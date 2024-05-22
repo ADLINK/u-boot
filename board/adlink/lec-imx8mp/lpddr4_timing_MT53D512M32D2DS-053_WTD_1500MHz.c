@@ -1873,7 +1873,7 @@ struct dram_timing_info dram_timing_2GB = {
 };
 
 #ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
-void board_dram_ecc_scrub(void)
+void board_dram_ecc_scrub_2GB(void)
 {
 	/* add inline scrb function MPlus spcific */
 	/* scrub 0-1.75G */

@@ -1877,7 +1877,7 @@ struct dram_timing_info dram_timing_2GK = {
 };
 
 #ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
-void board_dram_ecc_scrub(void)
+void board_dram_ecc_scrub_2GK(void)
 {
 	ddrc_inline_ecc_scrub(0x0,0x1bffffff);
 	ddrc_inline_ecc_scrub_end(0x0,0x1fffffff);

@@ -322,6 +322,27 @@ __weak int board_phys_sdram_size(phys_size_t *size)
 	*size += PHYS_SDRAM_2_SIZE;
 #endif
 #endif
+
+#ifdef CONFIG_IMX8M_DRAM_INLINE_ECC
+	//ECC DRAM consumes 1/8th of DDR size
+	switch (get_dram_sku()) {
+                case 4: //8GB
+                        *size = 0x1C0000000;
+                        break;
+                case 3: //4GB
+                        *size = 0xE0000000;
+                        break;
+                case 2: //2GB
+                        *size = 0x70000000;
+                        break;
+                case 1: //1GB
+                        *size = 0x38000000;
+                        break;
+                case 0: //512MB
+                        *size = 0x1C000000;
+                        break;
+        }
+#else
 	switch (get_dram_sku()) {
                 case 4: //8GB
                         *size = 0x200000000;
@@ -339,6 +360,7 @@ __weak int board_phys_sdram_size(phys_size_t *size)
                         *size = 0x20000000;
                         break;
         }
+#endif
 
 	return 0;
 }
