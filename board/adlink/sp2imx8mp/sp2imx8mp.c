@@ -689,6 +689,7 @@ char* board_boot_device(enum boot_device boot_dev)
 
 int board_late_init(void)
 {
+	env_set("preboot", "panel off;");
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
